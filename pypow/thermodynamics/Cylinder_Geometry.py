@@ -1,3 +1,5 @@
+usr
+
 #This file calculates the cylinder geometry given the top dead center volume the sweept volume and the bore and stroke
 #and the location within the engine cylce given the crank angle Depictions of the geometry and equations can by found in
 #Internal Combustion Engine Fundementals, Heywood, page 43.
@@ -68,7 +70,7 @@ if __name__=="__main__":
 
     c=Cylinder_Geometry()
     tdcv= c.tdc_volume_calc()
-    print tdcv
+    print (tdcv)
 
     cylinder_volume=c.cylinder_volume_func()
     print cylinder_volume
