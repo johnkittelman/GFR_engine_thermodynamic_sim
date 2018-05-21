@@ -1,19 +1,22 @@
-usr
+#!/usr/bin/env python
 
-#This file calculates the cylinder geometry given the top dead center volume the sweept volume and the bore and stroke
-#and the location within the engine cylce given the crank angle Depictions of the geometry and equations can by found in
-#Internal Combustion Engine Fundementals, Heywood, page 43.
+"""This file calculates the cylinder geometry given the top dead center volume the sweept volume and the bore and stroke
+and the location within the engine cylce given the crank angle Depictions of the geometry and equations can by found in
+Internal Combustion Engine Fundementals, Heywood, page 43."""
+
 import numpy as np
 from matplotlib import pyplot
 
 class Cylinder_Geometry:
-    # The geometry of the cylnder is a function of the given variables
-    # The angle theta has a resolution of 1/10th of a degree
-    #volumes are in cubic centimeters and lengths are in mm by convention
+    """ The geometry of the cylnder is a function of the given variables
+    The angle theta has a resolution of 1/10th of a degree
+    volumes are in cubic centimeters and lengths are in mm by convention"""
 
-    def __init__(self,compression_ratio = 12.75 ,bore=9.5,stroke=6.34,tdc_volume=0,swept_volume=449.9, connecting_rod_length=15.0,crank_angle=np.arange(0,720,0.1)):
-        #This init function converts all the base geometeries into arrays using numpy.array(), this is done
-        #for speed
+    def __init__(self,compression_ratio = 12.75 ,bore=9.5,stroke=6.34,tdc_volume=0.0,swept_volume=449.9, connecting_rod_length=15.0,crank_angle=np.arange(0,720,0.1)):
+        """This init function converts all the base geometeries into arrays using numpy.array(), this is done
+        #for speed"""
+        if compression_ratio <0 or bore < 0 or stroke < 0 or tdc_volume < 0 or swept_volume < 0 or connecting_rod_length < 0:
+            raise ValueError('Inputs must be postive')
         self.compression_ratio=compression_ratio
         self.bore=np.array(bore)
         self.stroke=np.array(stroke)
@@ -26,6 +29,9 @@ class Cylinder_Geometry:
 
 
     def cylinder_volume_func(self):
+        '''This calcualates the cylinder volume given the function outlined in heywoods book on page 43,
+        The default caluation is to 1/10th of a degree, the resolution can change by change by changing the
+        Crank_angle numpy array'''
 
         theta_c = np.deg2rad(self.crank_angle)
         a=self.crank_radius
@@ -35,24 +41,32 @@ class Cylinder_Geometry:
         c=Cylinder_Geometry()
         if v_c == 0:
             v_c = c.tdc_volume_calc()
-        cylinder_volume=range(0,len(theta_c))
+
+        #cylinder_volume= np.arange(0,len(theta_c))
+
+        cylinder_volume = []
         for i,theta in enumerate(theta_c):
             s=(a * np.cos(theta)) + (np.sqrt(l ** 2 - (a ** 2) * (np.sin(theta)) ** 2))
 
-            cylinder_volume[i]= v_c+((np.pi*(b**2))/4.0)*(l+a-s)
+            cylinder_volume=(v_c+((np.pi*(b**2))/4.0)*(l+a-s))
+            print (cylinder_volume)
         return cylinder_volume
 
     def tdc_volume_calc(self):
+        ''' This calculates the tdc volume using the compression ratio and the swept volume
+        the equation for this can be found in heywoods books on page 44'''
         tdc_volume=self.swept_volume/(self.compression_ratio-1)
         return tdc_volume
-    def compression_ratio(self):
 
+    def compression_ratio(self):
+        ''' compression ration can be found if given swept volume and tdc volume'''
         compression_ratio= (self.tdc_volume+self.swept_volume)/self.tdc_volume
 
         return compression_ratio
     def piston_velocity(self,n):
-        #this function is used to define both the average velocity of the piston
-        #aswell as the actual velocity of the piston
+        '''this function is used to define both the average velocity of the piston
+        aswell as the actual velocity of the piston'''
+
         theta_c = np.deg2rad(self.crank_angle)
         ave_pist_velocity=2*self.stroke*n
 
@@ -69,13 +83,10 @@ class Cylinder_Geometry:
 if __name__=="__main__":
 
     c=Cylinder_Geometry()
-    tdcv= c.tdc_volume_calc()
+    tdcv= c.cylinder_volume_func()
     print (tdcv)
+    #print (len(tdcv))
+    #print (np.array2string(tdcv))
 
-    cylinder_volume=c.cylinder_volume_func()
-    print cylinder_volume
-
-    pyplot.plot(cylinder_volume)
-    pyplot.show
 
 
