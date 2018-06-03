@@ -12,20 +12,30 @@ class Cylinder_Geometry:
     The angle theta has a resolution of 1/10th of a degree
     volumes are in cubic centimeters and lengths are in mm by convention"""
 
-    def __init__(self,compression_ratio = 12.75 ,bore=9.5,stroke=6.34,tdc_volume=0.0,swept_volume=449.9, connecting_rod_length=15.0,crank_angle=np.arange(0,720,0.1)):
+    def __init__(self,compression_ratio = 12.75 ,bore=9.5,stroke=6.34,tdc_volume=0.0,swept_volume=449.9, connecting_rod_length=15.0,connecting_rod_ratio=3.388,crank_angle=np.arange(0,720,0.1)):
         """This init function converts all the base geometeries into arrays using numpy.array(), this is done
         #for speed"""
         if compression_ratio <0 or bore < 0 or stroke < 0 or tdc_volume < 0 or swept_volume < 0 or connecting_rod_length < 0:
             raise ValueError('Inputs must be postive')
         self.compression_ratio=compression_ratio
+
         self.bore=np.array(bore)
+
         self.stroke=np.array(stroke)
+
         self.tdc_volume=np.array(tdc_volume)
+
         self.swept_volume=np.array(swept_volume)
+
         self.crank_radius=np.array(stroke/2.0)
+
         self.connecting_rod_length=np.array(connecting_rod_length)
+
         self.crank_angle=np.array(crank_angle)
+
         self.connectrod_crankrad= np.array(connecting_rod_length/(stroke*0.5))
+
+        self.connecting_rod_ratio=np.array(connecting_rod_ratio)
 
 
     def cylinder_volume_func(self):
@@ -42,15 +52,23 @@ class Cylinder_Geometry:
         if v_c == 0:
             v_c = c.tdc_volume_calc()
 
-        #cylinder_volume= np.arange(0,len(theta_c))
+        cylinder_volume= np.arange(0,len(theta_c))
 
         cylinder_volume = []
         for i,theta in enumerate(theta_c):
             s=(a * np.cos(theta)) + (np.sqrt(l ** 2 - (a ** 2) * (np.sin(theta)) ** 2))
 
-            cylinder_volume=(v_c+((np.pi*(b**2))/4.0)*(l+a-s))
-            print (cylinder_volume)
+            cylinder_volume.append((v_c+((np.pi*(b**2))/4.0)*(l+a-s)))
+
         return cylinder_volume
+
+    def areaCylinder(self):
+        # surface area of cylinder at instant
+        C=Cylinder_Geometry()
+        piston_pos= C.piston_position(self.crank_angle)
+        piston_area = np.pi * (self.bore ** 2) * 0.25
+        wall_area = np.pi * self.bore * self.stroke * (1 - piston_pos)
+        return wall_area + (piston_area * 2)
 
     def tdc_volume_calc(self):
         ''' This calculates the tdc volume using the compression ratio and the swept volume
@@ -70,15 +88,23 @@ class Cylinder_Geometry:
         theta_c = np.deg2rad(self.crank_angle)
         ave_pist_velocity=2*self.stroke*n
 
-        for theta in theta_c:
-            actual_pist_velocity= ave_pist_velocity*(np.pi*0.5*np.sin(theta_c))*(1+(np.cos(theta_c)/np.sqrt(self.connectrod_crankrad**2-(np.sin(theta_c)))))
+
+        actual_pist_velocity= ave_pist_velocity*(np.pi*0.5*np.sin(theta_c))*(1+(np.cos(theta_c)/np.sqrt(self.connectrod_crankrad**2-(np.sin(theta_c)))))
 
         return ave_pist_velocity, actual_pist_velocity
 
 
 
+    def piston_position(self, crank_angle):
+        """ Relative position of the piston, =1 at TDC and =0 at BDC, regarding
+        to the crank angle in degres. """
+        # Angle in radians
+        radangle = np.radians(crank_angle)
+        # Ratio of the crank radius on the connecting rod length
+        ratio = 1/self.connecting_rod_ratio
+        piston_pos=1-0.5*((1-np.cos(radangle)) + ratio*(1-np.sqrt(1-pow(ratio*np.sin(radangle),2))))
 
-
+        return piston_pos
 
 if __name__=="__main__":
 
